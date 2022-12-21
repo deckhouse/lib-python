@@ -16,11 +16,8 @@ class KubernetesModifier:
     Wrapper for the kubernetes actions: creation, deletion, patching.
     """
 
-    def __init__(self, mem_store: bool = False):
-        if mem_store:
-            self.storage = MemStorage()
-        else:
-            self.storage = FileStorage(os.getenv("KUBERNETES_PATCH_PATH"))
+    def __init__(self, storage):
+        self.storage = storage
 
     def __enter__(self):
         return self

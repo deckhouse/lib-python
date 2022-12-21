@@ -10,6 +10,7 @@ from dataclasses import dataclass
 
 from .kubernetes import KubernetesModifier
 from .metrics import MetricsExporter
+from .storage import FileStorage
 
 
 def read_binding_context():
@@ -28,11 +29,11 @@ def read_binding_context():
 
 @dataclass
 class HookContext:
-    def __init__(self, binding_context: dict, metrics=None, kubernetes=None):
+    def __init__(self, binding_context: dict, metrics, kubernetes):
         self.binding_context = binding_context
         self.snapshots = binding_context.get("snapshots", {})
-        self.metrics = MetricsExporter() if metrics is None else metrics
-        self.kubernetes = KubernetesModifier() if kubernetes is None else kubernetes
+        self.metrics = metrics
+        self.kubernetes = kubernetes
 
 
 # TODO --log-proxy-hook-json / LOG_PROXY_HOOK_JSON (default=false)
@@ -55,8 +56,10 @@ def bindingcontext(configpath):
             print(cf.read())
             sys.exit(0)
 
+    metrics = MetricsExporter(FileStorage(os.getenv("METRICS_PATH")))
+    kubernetes = KubernetesModifier(FileStorage(os.getenv("KUBERNETES_PATCH_PATH")))
     for ctx in read_binding_context():
-        yield HookContext(ctx)
+        yield HookContext(ctx, metrics, kubernetes)
 
 
 def run(func, configpath):
