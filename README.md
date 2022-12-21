@@ -1,7 +1,6 @@
 # Shell Operator Python Framework
 
-This is a framework for [shell-operator](https://github.com/flant/shell-operator) for writing hooks
-im Python.
+Simplifies writing [shell-operator](https://github.com/flant/shell-operator) hooks in Python.
 
 ## Install
 
