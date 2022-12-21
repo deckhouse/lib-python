@@ -13,6 +13,15 @@ from .metrics import MetricsExporter
 from .storage import FileStorage
 
 
+@dataclass
+class HookContext:
+    def __init__(self, binding_context: dict, metrics, kubernetes):
+        self.binding_context = binding_context
+        self.snapshots = binding_context.get("snapshots", {})
+        self.metrics = metrics
+        self.kubernetes = kubernetes
+
+
 def read_binding_context():
     """
     Iterates over hook contexts in the binding context file.
@@ -27,34 +36,35 @@ def read_binding_context():
         yield ctx
 
 
-@dataclass
-class HookContext:
-    def __init__(self, binding_context: dict, metrics, kubernetes):
-        self.binding_context = binding_context
-        self.snapshots = binding_context.get("snapshots", {})
-        self.metrics = metrics
-        self.kubernetes = kubernetes
-
-
 # TODO --log-proxy-hook-json / LOG_PROXY_HOOK_JSON (default=false)
 #   Delegate hook stdout/stderr JSON logging to the hooks and act as a proxy that adds some extra #
 #   fields before just printing the output. NOTE: It ignores LOG_TYPE for the output of the hooks; #
 #   expects JSON lines to stdout/stderr from the hooks
 
 
-def bindingcontext(configpath):
+def bindingcontext(configpath=None, config=None):
     """
-    Provides binding context for hook.
+    Provides binding context for hook. Accepts config path or config text.
+
+    :param configpath: path to the hook config file
+    :param config: hook config text itself
 
     Example:
 
-     for ctx in bindingcontext("my_hook.yaml")
+     for ctx in bindingcontext(configath="my_hook.yaml")
         do_something(ctx)
     """
     if len(sys.argv) > 1 and sys.argv[1] == "--config":
-        with open(configpath, "r", encoding="utf-8") as cf:
-            print(cf.read())
-            sys.exit(0)
+        if config is None and configpath is None:
+            raise ValueError("config or configpath must be provided")
+
+        if config is not None:
+            print(config)
+        else:
+            with open(configpath, "r", encoding="utf-8") as cf:
+                print(cf.read())
+
+        sys.exit(0)
 
     metrics = MetricsExporter(FileStorage(os.getenv("METRICS_PATH")))
     kubernetes = KubernetesModifier(FileStorage(os.getenv("KUBERNETES_PATCH_PATH")))
@@ -62,9 +72,12 @@ def bindingcontext(configpath):
         yield HookContext(ctx, metrics, kubernetes)
 
 
-def run(func, configpath):
+def run(func, configpath=None, config=None):
     """
-    Run the hook function with config.
+    Run the hook function with config. Accepts config path or config text.
+
+    :param configpath: path to the hook config file
+    :param config: hook config text itself
     """
-    for ctx in bindingcontext(configpath):
+    for ctx in bindingcontext(configpath=configpath, config=config):
         func(ctx)
