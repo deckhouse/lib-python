@@ -15,8 +15,6 @@ pip install shell-operator
 from shell_operator import hook
 
 def main(ctx: hook.Context):
-
-def main(ctx: hook.Context):
     # ... object = { "kind" : "Pod", "apiVersion" : "v1", ... }
     ctx.output.kubernetes.create_or_update(object)
     # ... metric = { "name" : "power", "group": "my_hook", "set" : 9000, ... }
