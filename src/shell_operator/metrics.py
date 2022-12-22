@@ -4,11 +4,6 @@
 #
 
 
-import os
-
-from .storage import FileStorage, MemStorage
-
-
 class MetricsExporter:
     """
     Wrapper for metrics exporting. Accepts raw dicts and appends them into the metrics file.
