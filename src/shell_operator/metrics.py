@@ -4,7 +4,7 @@
 #
 
 
-class MetricsExporter:
+class MetricsCollector:
     """
     Wrapper for metrics exporting. Accepts raw dicts and appends them into the metrics file.
     """
@@ -18,8 +18,18 @@ class MetricsExporter:
     def __exit__(self, exc_type, exc_value, traceback):
         self.storage.__exit__(exc_type, exc_value, traceback)
 
-    def export(self, metric: dict):
+    def collect(self, metric: dict):
+        """Collect metric JSON for export.
+
+        Args:
+            metric (dict): metric dict, will be serialized into JSON
+        """
         self.storage.write(metric)
 
-    def expire_group(self, metric_group: str):
-        self.export({"action": "expire", "group": metric_group})
+    def expire(self, group: str):
+        """Expire all metrics in the group.
+
+        Args:
+            group (str): metric group name
+        """
+        self.collect({"action": "expire", "group": group})

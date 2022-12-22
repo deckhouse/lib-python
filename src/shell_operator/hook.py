@@ -7,19 +7,30 @@ import json
 import os
 import sys
 from dataclasses import dataclass
+from typing import Iterable
 
 from .kubernetes import KubernetesModifier
-from .metrics import MetricsExporter
-from .storage import FileStorage
+from .metrics import MetricsCollector
+from .storage import FileStorage, MemStorage
 
 
 @dataclass
-class HookContext:
-    def __init__(self, binding_context: dict, metrics, kubernetes):
+class Output:
+    metrics: MetricsCollector
+    kubernetes: KubernetesModifier
+
+    # TODO  --log-proxy-hook-json / LOG_PROXY_HOOK_JSON (default=false) Delegate hook stdout/stderr
+    # JSON logging to the hooks and act as a proxy that adds some extra fields before just printing
+    # the output. NOTE: It ignores LOG_TYPE for the output of the hooks; expects JSON lines to
+    # stdout/stderr from the hooks
+
+
+@dataclass
+class Context:
+    def __init__(self, binding_context: dict, output: Output):
         self.binding_context = binding_context
         self.snapshots = binding_context.get("snapshots", {})
-        self.metrics = metrics
-        self.kubernetes = kubernetes
+        self.output = output
 
 
 def read_binding_context():
@@ -36,24 +47,28 @@ def read_binding_context():
         yield ctx
 
 
-# TODO --log-proxy-hook-json / LOG_PROXY_HOOK_JSON (default=false)
-#   Delegate hook stdout/stderr JSON logging to the hooks and act as a proxy that adds some extra #
-#   fields before just printing the output. NOTE: It ignores LOG_TYPE for the output of the hooks; #
-#   expects JSON lines to stdout/stderr from the hooks
-
-
-def bindingcontext(configpath=None, config=None):
+def __run(func, binding_context, output):
     """
-    Provides binding context for hook. Accepts config path or config text.
+    Run the hook function with config. Accepts config path or config text.
+
+    :param func: the function to run
+    :param binding_context: the list of hook binding contexts
+    :param output: output means for metrics and kubernetes
+    """
+
+    for bindctx in binding_context:
+        hookctx = Context(bindctx, output)
+        func(hookctx)
+
+
+def run(func, configpath=None, config=None):
+    """
+    Run the hook function with config. Accepts config path or config text.
 
     :param configpath: path to the hook config file
     :param config: hook config text itself
-
-    Example:
-
-     for ctx in bindingcontext(configath="my_hook.yaml")
-        do_something(ctx)
     """
+
     if len(sys.argv) > 1 and sys.argv[1] == "--config":
         if config is None and configpath is None:
             raise ValueError("config or configpath must be provided")
@@ -66,18 +81,31 @@ def bindingcontext(configpath=None, config=None):
 
         sys.exit(0)
 
-    metrics = MetricsExporter(FileStorage(os.getenv("METRICS_PATH")))
-    kubernetes = KubernetesModifier(FileStorage(os.getenv("KUBERNETES_PATCH_PATH")))
-    for ctx in read_binding_context():
-        yield HookContext(ctx, metrics, kubernetes)
+    output = Output(
+        MetricsCollector(FileStorage(os.getenv("METRICS_PATH"))),
+        KubernetesModifier(FileStorage(os.getenv("KUBERNETES_PATCH_PATH"))),
+    )
+
+    binding_context = read_binding_context()
+
+    __run(func, binding_context, output)
 
 
-def run(func, configpath=None, config=None):
+def testrun(func, binding_context: Iterable) -> Output:
     """
-    Run the hook function with config. Accepts config path or config text.
+    Test-run the hook function with config. Accepts config path or config text.
 
-    :param configpath: path to the hook config file
-    :param config: hook config text itself
+    Returns output means for metrics and kubernetes.
+
+    :param binding_context: the list of hook binding contexts
+    :return: output means for metrics and kubernetes
     """
-    for ctx in bindingcontext(configpath=configpath, config=config):
-        func(ctx)
+
+    output = Output(
+        MetricsCollector(MemStorage()),
+        KubernetesModifier(MemStorage()),
+    )
+
+    __run(func, binding_context, output)
+
+    return output
