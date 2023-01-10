@@ -1,22 +1,22 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[project]
-name = "shell_operator"
-version = "0.0.5"
-authors = [
-        { name = "Eugene Shevchenko", email = "evgeny.shevchenko@flant.com" },
-]
-description = "Python library for Shell Operator"
+[tool.poetry]
+name = "shell-operator"
+version = "0.0.6"
+description = "Python SDK for Shell Operator hooks"
+authors = ["Eugene Shevchenko <evgeny.shevchenko@flant.com>"]
+license = "Apache License 2.0"
 readme = "README.md"
-requires-python = ">=3.7"
-classifiers = [
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-]
+packages = [{include = "shell_operator"}]
 
-[project.urls]
-"Homepage" = "https://github.com/flant/py-shell-operator"
-"Bug Tracker" = "https://github.com/flant/py-shell-operator/issues"
+[tool.poetry.dependencies]
+python = "^3.10"
+dictdiffer = "^0.9.0"
+dotmap = "^1.3.30"
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.12.0"
+pylint = "^2.15.10"
+pytest = "^7.2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

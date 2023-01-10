@@ -56,10 +56,10 @@ class Output:
 
 @dataclass
 class Context:
-    def __init__(self, binding_context: dict, values: dict, output: Output):
+    def __init__(self, binding_context: dict, initial_values: dict, output: Output):
         self.binding_context = binding_context
         self.snapshots = binding_context.get("snapshots", {})
-        self.values = DotMap(deepcopy(values))  # DotMap for values.dot.notation
+        self.values = DotMap(deepcopy(initial_values))  # DotMap for values.dot.notation
         self.output = output
 
     @property
@@ -110,14 +110,16 @@ def __run(func, binding_context: list, initial_values: dict):
     :return output: output means with all generated payloads and updated values
     """
 
+    if not binding_context:
+        binding_context = [{}]
+    if not initial_values:
+        initial_values = DotMap()
+
     output = Output(
         MetricsCollector(),
         KubeOperationCollector(),
         ValuesPatchesCollector(initial_values),
     )
-
-    if not binding_context:
-        binding_context = [{}]
 
     for bindctx in binding_context:
         hookctx = Context(bindctx, initial_values, output)
@@ -157,7 +159,9 @@ def run(func, configpath=None, config=None):
 
 
 def testrun(
-    func, binding_context: Iterable = None, initial_values: dict = None
+    func,
+    binding_context: Iterable = None,
+    initial_values: dict = None,
 ) -> Output:
     """
     Test-run the hook function. Accepts binding context and initial values.
