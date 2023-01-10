@@ -59,7 +59,7 @@ class Context:
     def __init__(self, binding_context: dict, values: dict, output: Output):
         self.binding_context = binding_context
         self.snapshots = binding_context.get("snapshots", {})
-        self.values = DotMap(deepcopy(values))
+        self.values = DotMap(deepcopy(values))  # DotMap for values.dot.notation
         self.output = output
 
     @property
@@ -79,8 +79,7 @@ def read_binding_context_file():
     """
     Iterates over hook contexts in the binding context file.
 
-    Yields:
-        _type_: dict
+    :yield ctx: hook binding context
     """
     context_path = os.getenv("BINDING_CONTEXT_PATH")
     with open(context_path, "r", encoding="utf-8") as f:
@@ -93,8 +92,7 @@ def read_values_file():
     """
     Reads module values from the values file.
 
-    Returns:
-        _type_: dict
+    :return values: the dict of the values
     """
     values_path = os.getenv("VALUES_PATH")
     with open(values_path, "r", encoding="utf-8") as f:
@@ -108,7 +106,8 @@ def __run(func, binding_context: list, initial_values: dict):
 
     :param func: the function to run
     :param binding_context: the list of hook binding contexts
-    :param output: output means for metrics and kubernetes
+    :param initial_values: initial values
+    :return output: output means with all generated payloads and updated values
     """
 
     output = Output(
@@ -156,11 +155,13 @@ def run(func, configpath=None, config=None):
 
 def testrun(func, binding_context: Iterable, initial_values: dict) -> Output:
     """
-    Test-run the hook function with config. Accepts config path or config text.
+    Test-run the hook function. Accepts binding context and initial values.
 
-    Returns output means for metrics, kubernetes, and values patches.
+    Returns output means for metrics, kubernetes, values patches, and also modified values for more
+    convenient tests.
 
     :param binding_context: the list of hook binding contexts
+    :param initial_values: initial values
     :return: output means for metrics and kubernetes
     """
 
