@@ -49,7 +49,11 @@ class Output:
         )
 
         for path_env, collector in file_outputs:
-            with FileStorage(os.getenv(path_env)) as file:
+            path = os.getenv(path_env)
+            if not path:
+                # No values in Shell Operator
+                continue
+            with FileStorage(path) as file:
                 for payload in collector.data:
                     file.write(payload)
 
@@ -95,6 +99,9 @@ def read_values_file():
     :return values: the dict of the values
     """
     values_path = os.getenv("VALUES_PATH")
+    if not values_path:
+        # No values in Shell Operator
+        return {}
     with open(values_path, "r", encoding="utf-8") as f:
         values = json.load(f)
     return values
