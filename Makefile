@@ -1,4 +1,4 @@
-.PHONY: build test clean
+.PHONY: build test clean publish
 build:
 	poetry build
 
@@ -8,5 +8,5 @@ test:
 clean:
 	rm -rf build dist *.egg-info
 
-upload: clean build
+publish: clean build
 	poetry publish
