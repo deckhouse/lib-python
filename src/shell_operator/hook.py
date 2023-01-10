@@ -48,8 +48,8 @@ class Output:
             ("VALUES_JSON_PATCH_PATH", self.values_patches),
         )
 
-        for path, collector in file_outputs:
-            with FileStorage(path) as file:
+        for path_env, collector in file_outputs:
+            with FileStorage(os.getenv(path_env)) as file:
                 for payload in collector.data:
                     file.write(payload)
 
