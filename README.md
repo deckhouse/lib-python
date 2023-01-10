@@ -15,10 +15,16 @@ pip install shell-operator
 from shell_operator import hook
 
 def main(ctx: hook.Context):
+    # Manipulate kubernetes state
     # ... object = { "kind" : "Pod", "apiVersion" : "v1", ... }
-    ctx.output.kubernetes.create_or_update(object)
+    ctx.kubernetes.create_or_update(object)
+
+    # Export metrics
     # ... metric = { "name" : "power", "group": "my_hook", "set" : 9000, ... }
-    ctx.output.metrics.collect(metric)
+    ctx.metrics.collect(metric)
+
+    # Use module values for helm chart
+    ctx.values.myModule.deployment.replicas = 5
 
 
 if __name__ == "__main__":
@@ -49,5 +55,8 @@ def test_hello():
     out = hook.testrun(main, binding_context)
 
     assert out.metrics.data == expected_metrics
-    assert out.kubernetes.data == expected_kube_operations
+    assert out.kube_operations.data == expected_kube_operations
+    assert out.values_patches.data == expected_values_patches
+
+    assert out.values.myModule.deployment.repicas == 5
 ```

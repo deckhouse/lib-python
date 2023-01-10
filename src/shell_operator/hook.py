@@ -18,7 +18,6 @@ from .storage import FileStorage
 from .values import ValuesPatchesCollector
 
 
-@dataclass
 class Output:
     """
     Container for output means for metrics, kubernetes, and values.
@@ -27,9 +26,14 @@ class Output:
     whether shell-operator (or addon-operator) file paths, or into memory.
     """
 
-    metrics: MetricsCollector
-    kubernetes: KubeOperationCollector
-    values: ValuesPatchesCollector
+    # Values with outputs for tests, values patches are less convenient than values
+    # themselves.
+    values: DotMap = None
+
+    def __init__(self, metrics, kube_operations, values_patches):
+        self.metrics = metrics
+        self.kube_operations = kube_operations
+        self.values_patches = values_patches
 
     # TODO  logger: --log-proxy-hook-json / LOG_PROXY_HOOK_JSON (default=false)
     #
@@ -39,9 +43,9 @@ class Output:
 
     def flush(self):
         file_outputs = (
-            ("KUBERNETES_PATCH_PATH", self.kubernetes),
             ("METRICS_PATH", self.metrics),
-            ("VALUES_JSON_PATCH_PATH", self.values),
+            ("KUBERNETES_PATCH_PATH", self.kube_operations),
+            ("VALUES_JSON_PATCH_PATH", self.values_patches),
         )
 
         for path, collector in file_outputs:
@@ -57,6 +61,18 @@ class Context:
         self.snapshots = binding_context.get("snapshots", {})
         self.values = DotMap(deepcopy(values))
         self.output = output
+
+    @property
+    def metrics(self):
+        return self.output.metrics
+
+    @property
+    def kubernetes(self):
+        return self.output.kube_operations
+
+    @property
+    def values_patches(self):
+        return self.output.values_patches
 
 
 def read_binding_context_file():
@@ -104,7 +120,8 @@ def __run(func, binding_context: list, initial_values: dict):
     for bindctx in binding_context:
         hookctx = Context(bindctx, initial_values, output)
         func(hookctx)
-        output.values.update(hookctx.values)
+        output.values = hookctx.values
+        output.values_patches.update(hookctx.values)
 
     return output
 
