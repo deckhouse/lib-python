@@ -23,7 +23,7 @@ def main(ctx: hook.Context):
     # ... metric = { "name" : "power", "group": "my_hook", "set" : 9000, ... }
     ctx.metrics.collect(metric)
 
-    # Use module values for helm chart
+    # Use in-memory values for helm chart. Shell Operator does not support values, but Addon Operator and Deckhouse do.
     ctx.values.myModule.deployment.replicas = 5
 
 
@@ -47,12 +47,17 @@ An example for pytest
 from hello import main
 from shell_operator import hook
 
-# binding_context = [ { ... } ]
-# expected_metrics = [ ... ]
-# expected_kube_operations = [ ... ]
+# Inputs
+#   initial_values = { ... }
+#   binding_context = [ { ... } ]
+# Outputs
+#   expected_metrics = [ ... ]
+#   expected_kube_operations = [ ... ]
+#   expected_values_patches = [ ... ]
+#   expected_values = { ... }
 
 def test_hello():
-    out = hook.testrun(main, binding_context)
+    out = hook.testrun(main, binding_context, initial_values)
 
     assert out.metrics.data == expected_metrics
     assert out.kube_operations.data == expected_kube_operations
