@@ -45,7 +45,7 @@ def json_patch(change):
         # ('add', ['x', 'y', 'a'], [(2, 2)])
 
         key, value = values[0]
-        path = json_path(path_segments + (key,))
+        path = json_path(path_segments + [key])
         return {"op": op, "path": path, "value": value}
 
     if op == "change":
@@ -63,11 +63,11 @@ def json_patch(change):
         # ('remove', ['x', 'y'], [('t', 0)])
 
         key = values[0][0]
-        path = json_path(path_segments + (key,))
+        path = json_path(path_segments + [key])
         return {"op": op, "path": path}
 
     raise ValueError(f"Unknown patch operation: {op}")
 
 
 def json_path(path: Iterable):
-    return "/" + "/".join(path)
+    return "/" + "/".join([str(p) for p in path])

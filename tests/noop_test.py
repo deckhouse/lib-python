@@ -1,7 +1,7 @@
 from shell_operator import hook
 
 
-def _run_noop():
+def setup():
     def main(_):
         pass
 
@@ -10,17 +10,17 @@ def _run_noop():
 
 
 def test_noop_brings_no_kube_operations():
-    outputs = _run_noop()
+    outputs = setup()
     assert not outputs.kube_operations.data
 
 
 def test_noop_brings_no_metrics():
-    outputs = _run_noop()
+    outputs = setup()
     assert not outputs.metrics.data
 
 
 def test_noop_brings_no_values_changes():
-    outputs = _run_noop()
+    outputs = setup()
 
     assert not outputs.values
     assert not outputs.values_patches.initial_values
