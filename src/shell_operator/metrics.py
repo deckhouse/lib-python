@@ -3,8 +3,6 @@
 # Copyright 2022 Flant JSC Licensed under Apache License 2.0
 #
 
-from .storage import MemStorage
-
 
 class MetricsCollector:
     """
@@ -12,15 +10,10 @@ class MetricsCollector:
     """
 
     def __init__(self):
-        self.storage = MemStorage()
+        self.data = []
 
-    def collect(self, metric: dict):
-        """Collect metric JSON for export.
-
-        Args:
-            metric (dict): metric dict, will be serialized into JSON
-        """
-        self.storage.write(metric)
+    def collect(self, payload: dict):
+        self.data.append(payload)
 
     def expire(self, group: str):
         """Expire all metrics in the group.

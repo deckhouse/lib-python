@@ -3,8 +3,6 @@
 # Copyright 2022 Flant JSC Licensed under Apache License 2.0
 #
 
-from .storage import MemStorage
-
 
 class KubeOperationCollector:
     """
@@ -12,10 +10,10 @@ class KubeOperationCollector:
     """
 
     def __init__(self):
-        self.storage = MemStorage()
+        self.data = []
 
     def collect(self, payload: dict):
-        self.storage.write(payload)
+        self.data.append(payload)
 
     def create(self, obj):
         """

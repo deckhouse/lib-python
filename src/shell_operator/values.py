@@ -7,8 +7,6 @@ from typing import Iterable
 
 from dictdiffer import deepcopy, diff
 
-from .storage import MemStorage
-
 
 class ValuesPatchesCollector:
     """
@@ -17,10 +15,10 @@ class ValuesPatchesCollector:
 
     def __init__(self, values: dict):
         self.initial_values = deepcopy(values)
-        self.storage = MemStorage()
+        self.data = []
 
     def collect(self, payload: dict):
-        self.storage.write(payload)
+        self.data.append(payload)
 
     def update(self, updated_values: dict):
         for patch in values_json_patches(self.initial_values, updated_values):

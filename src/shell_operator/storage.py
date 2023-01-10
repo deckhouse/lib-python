@@ -23,21 +23,3 @@ class FileStorage:
     def write(self, payload: dict):
         self.file.write(json.dumps(payload))
         self.file.write("\n")
-
-
-class MemStorage:
-    """
-    This is a stub for testing purposes.
-    """
-
-    def __init__(self):
-        self.data = []
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        pass
-
-    def write(self, payload: dict):
-        self.data.append(payload)

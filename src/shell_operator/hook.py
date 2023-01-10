@@ -45,9 +45,9 @@ class Output:
         )
 
         for path, collector in file_outputs:
-            with FileStorage(path) as storage:
-                for payload in collector.storage.data:
-                    storage.write(payload)
+            with FileStorage(path) as file:
+                for payload in collector.data:
+                    file.write(payload)
 
 
 @dataclass

@@ -48,6 +48,6 @@ from shell_operator import hook
 def test_hello():
     out = hook.testrun(main, binding_context)
 
-    assert out.metrics.storage.data == expected_metrics
-    assert out.kubernetes.storage.data == expected_kube_operations
+    assert out.metrics.data == expected_metrics
+    assert out.kubernetes.data == expected_kube_operations
 ```
