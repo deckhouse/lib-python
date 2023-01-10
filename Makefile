@@ -1,12 +1,12 @@
 .PHONY: build test clean
 build:
-	python -m build
+	poetry build
 
 test:
-	python -m pytest
+	poetry run pytest
 
 clean:
 	rm -rf build dist *.egg-info
 
 upload: clean build
-	python -m twine upload dist/*
+	poetry publish

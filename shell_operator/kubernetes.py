@@ -4,40 +4,34 @@
 #
 
 
-class KubernetesModifier:
+class KubeOperationCollector:
     """
     Wrapper for the kubernetes actions: creation, deletion, patching.
     """
 
-    def __init__(self, storage):
-        self.storage = storage
+    def __init__(self):
+        self.data = []
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.storage.__exit__(exc_type, exc_value, traceback)
-
-    def __export(self, payload: dict):
-        self.storage.write(payload)
+    def collect(self, payload: dict):
+        self.data.append(payload)
 
     def create(self, obj):
         """
         :param obj: must be serializable to JSON
         """
-        self.__export({"operation": "Create", "object": obj})
+        self.collect({"operation": "Create", "object": obj})
 
     def create_or_update(self, obj):
         """
         :param obj: must be serializable to JSON
         """
-        self.__export({"operation": "CreateOrUpdate", "object": obj})
+        self.collect({"operation": "CreateOrUpdate", "object": obj})
 
     def create_if_not_exists(self, obj):
         """
         :param obj: must be serializable to JSON
         """
-        self.__export({"operation": "CreateIfNotExists", "object": obj})
+        self.collect({"operation": "CreateIfNotExists", "object": obj})
 
     def __delete(
         self, operation, kind, namespace, name, apiVersion=None, subresource=None
@@ -64,7 +58,7 @@ class KubernetesModifier:
         if subresource is not None:
             obj["subresource"] = subresource
 
-        self.__export({"operation": operation, "object": obj})
+        self.collect({"operation": operation, "object": obj})
 
     def delete(self, kind, namespace, name, apiVersion=None, subresource=None):
         """
@@ -222,4 +216,4 @@ class KubernetesModifier:
         if ignoreMissingObject:
             ret["ignoreMissingObject"] = ignoreMissingObject
 
-        self.__export(ret)
+        self.collect(ret)
