@@ -116,6 +116,9 @@ def __run(func, binding_context: list, initial_values: dict):
         ValuesPatchesCollector(initial_values),
     )
 
+    if not binding_context:
+        binding_context = [{}]
+
     for bindctx in binding_context:
         hookctx = Context(bindctx, initial_values, output)
         func(hookctx)
@@ -153,7 +156,9 @@ def run(func, configpath=None, config=None):
     output.flush()
 
 
-def testrun(func, binding_context: Iterable, initial_values: dict) -> Output:
+def testrun(
+    func, binding_context: Iterable = None, initial_values: dict = None
+) -> Output:
     """
     Test-run the hook function. Accepts binding context and initial values.
 

@@ -25,10 +25,10 @@ class ValuesPatchesCollector:
             self.collect(patch)
 
 
-def values_json_patches(old_values: dict, new_values: dict):
+def values_json_patches(initial_values: dict, updated_values: dict):
     changes = diff(
-        old_values,
-        new_values,
+        initial_values,
+        updated_values,
         dot_notation=False,  # always return path as list
         expand=True,  # do not compact values in single operation
     )
