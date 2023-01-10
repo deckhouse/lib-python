@@ -3,20 +3,16 @@
 # Copyright 2022 Flant JSC Licensed under Apache License 2.0
 #
 
+from .storage import MemStorage
+
 
 class MetricsCollector:
     """
     Wrapper for metrics exporting. Accepts raw dicts and appends them into the metrics file.
     """
 
-    def __init__(self, storage):
-        self.storage = storage
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.storage.__exit__(exc_type, exc_value, traceback)
+    def __init__(self):
+        self.storage = MemStorage()
 
     def collect(self, metric: dict):
         """Collect metric JSON for export.

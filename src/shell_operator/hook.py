@@ -9,31 +9,57 @@ import sys
 from dataclasses import dataclass
 from typing import Iterable
 
-from .kubernetes import KubernetesModifier
+from dictdiffer import deepcopy
+from dotmap import DotMap
+
+from .kubernetes import KubernetesCollector
 from .metrics import MetricsCollector
-from .storage import FileStorage, MemStorage
+from .storage import FileStorage
+from .values import ValuesCollector
 
 
 @dataclass
 class Output:
-    metrics: MetricsCollector
-    kubernetes: KubernetesModifier
+    """
+    Container for output means for metrics, kubernetes, and values.
 
-    # TODO  --log-proxy-hook-json / LOG_PROXY_HOOK_JSON (default=false) Delegate hook stdout/stderr
-    # JSON logging to the hooks and act as a proxy that adds some extra fields before just printing
-    # the output. NOTE: It ignores LOG_TYPE for the output of the hooks; expects JSON lines to
-    # stdout/stderr from the hooks
+    Metrics, Kubernetes JSON patches and values JSON patches are collected in underlying storages,
+    whether shell-operator (or addon-operator) file paths, or into memory.
+    """
+
+    metrics: MetricsCollector
+    kubernetes: KubernetesCollector
+    values: ValuesCollector
+
+    # TODO  logger: --log-proxy-hook-json / LOG_PROXY_HOOK_JSON (default=false)
+    #
+    # Delegate hook stdout/stderr JSON logging to the hooks and act as a proxy that adds some extra
+    # fields before just printing the output. NOTE: It ignores LOG_TYPE for the output of the hooks;
+    # expects JSON lines to stdout/stderr from the hooks
+
+    def flush(self):
+        file_outputs = (
+            ("KUBERNETES_PATCH_PATH", self.kubernetes),
+            ("METRICS_PATH", self.metrics),
+            ("VALUES_JSON_PATCH_PATH", self.values),
+        )
+
+        for path, collector in file_outputs:
+            with FileStorage(path) as storage:
+                for payload in collector.storage.data:
+                    storage.write(payload)
 
 
 @dataclass
 class Context:
-    def __init__(self, binding_context: dict, output: Output):
+    def __init__(self, binding_context: dict, values: dict, output: Output):
         self.binding_context = binding_context
         self.snapshots = binding_context.get("snapshots", {})
+        self.values = DotMap(deepcopy(values))
         self.output = output
 
 
-def read_binding_context():
+def read_binding_context_file():
     """
     Iterates over hook contexts in the binding context file.
 
@@ -47,7 +73,20 @@ def read_binding_context():
         yield ctx
 
 
-def __run(func, binding_context, output):
+def read_values_file():
+    """
+    Reads module values from the values file.
+
+    Returns:
+        _type_: dict
+    """
+    values_path = os.getenv("VALUES_PATH")
+    with open(values_path, "r", encoding="utf-8") as f:
+        values = json.load(f)
+    return values
+
+
+def __run(func, binding_context: list, initial_values: dict):
     """
     Run the hook function with config. Accepts config path or config text.
 
@@ -56,9 +95,18 @@ def __run(func, binding_context, output):
     :param output: output means for metrics and kubernetes
     """
 
+    output = Output(
+        MetricsCollector(),
+        KubernetesCollector(),
+        ValuesCollector(initial_values),
+    )
+
     for bindctx in binding_context:
-        hookctx = Context(bindctx, output)
+        hookctx = Context(bindctx, initial_values, output)
         func(hookctx)
+        output.values.update(hookctx.values)
+
+    return output
 
 
 def run(func, configpath=None, config=None):
@@ -81,17 +129,15 @@ def run(func, configpath=None, config=None):
 
         sys.exit(0)
 
-    output = Output(
-        MetricsCollector(FileStorage(os.getenv("METRICS_PATH"))),
-        KubernetesModifier(FileStorage(os.getenv("KUBERNETES_PATCH_PATH"))),
-    )
+    binding_context = read_binding_context_file()
+    initial_values = read_values_file()
 
-    binding_context = read_binding_context()
+    output = __run(func, binding_context, initial_values)
 
-    __run(func, binding_context, output)
+    output.flush()
 
 
-def testrun(func, binding_context: Iterable) -> Output:
+def testrun(func, binding_context: Iterable, initial_values: dict) -> Output:
     """
     Test-run the hook function with config. Accepts config path or config text.
 
@@ -101,11 +147,5 @@ def testrun(func, binding_context: Iterable) -> Output:
     :return: output means for metrics and kubernetes
     """
 
-    output = Output(
-        MetricsCollector(MemStorage()),
-        KubernetesModifier(MemStorage()),
-    )
-
-    __run(func, binding_context, output)
-
+    output = __run(func, binding_context, initial_values)
     return output
