@@ -10,7 +10,7 @@ from dictdiffer import deepcopy, diff
 from .storage import MemStorage
 
 
-class ValuesCollector:
+class ValuesPatchesCollector:
     """
     Wrapper for the values manipulations (JSON patches)
     """

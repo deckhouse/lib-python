@@ -6,7 +6,7 @@
 from .storage import MemStorage
 
 
-class KubernetesCollector:
+class KubeOperationCollector:
     """
     Wrapper for the kubernetes actions: creation, deletion, patching.
     """

@@ -12,10 +12,10 @@ from typing import Iterable
 from dictdiffer import deepcopy
 from dotmap import DotMap
 
-from .kubernetes import KubernetesCollector
+from .kubernetes import KubeOperationCollector
 from .metrics import MetricsCollector
 from .storage import FileStorage
-from .values import ValuesCollector
+from .values import ValuesPatchesCollector
 
 
 @dataclass
@@ -28,8 +28,8 @@ class Output:
     """
 
     metrics: MetricsCollector
-    kubernetes: KubernetesCollector
-    values: ValuesCollector
+    kubernetes: KubeOperationCollector
+    values: ValuesPatchesCollector
 
     # TODO  logger: --log-proxy-hook-json / LOG_PROXY_HOOK_JSON (default=false)
     #
@@ -97,8 +97,8 @@ def __run(func, binding_context: list, initial_values: dict):
 
     output = Output(
         MetricsCollector(),
-        KubernetesCollector(),
-        ValuesCollector(initial_values),
+        KubeOperationCollector(),
+        ValuesPatchesCollector(initial_values),
     )
 
     for bindctx in binding_context:
@@ -141,7 +141,7 @@ def testrun(func, binding_context: Iterable, initial_values: dict) -> Output:
     """
     Test-run the hook function with config. Accepts config path or config text.
 
-    Returns output means for metrics and kubernetes.
+    Returns output means for metrics, kubernetes, and values patches.
 
     :param binding_context: the list of hook binding contexts
     :return: output means for metrics and kubernetes
