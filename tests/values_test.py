@@ -10,7 +10,7 @@ def test_value_change_is_stored():
 
     assert outputs.values.a == 42
     assert outputs.values_patches.data == [
-        {"op": "change", "path": "/a", "value": 42},
+        {"op": "replace", "path": "/a", "value": 42},
     ]
 
 

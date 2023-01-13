@@ -37,6 +37,10 @@ def values_json_patches(initial_values: dict, updated_values: dict):
 
 
 def json_patch(change):
+    """
+    Trtansform dictdiffer change to JSON patch.
+    https://jsonpatch.com/#operations
+    """
     op, path_segments, values = change
 
     if op == "add":
@@ -46,7 +50,7 @@ def json_patch(change):
 
         key, value = values[0]
         path = json_path(path_segments + [key])
-        return {"op": op, "path": path, "value": value}
+        return {"op": "add", "path": path, "value": value}
 
     if op == "change":
         #   op       |______path______|  from  to
@@ -55,7 +59,7 @@ def json_patch(change):
 
         value = values[1]
         path = json_path(path_segments)
-        return {"op": op, "path": path, "value": value}
+        return {"op": "replace", "path": path, "value": value}
 
     if op == "remove":
         #   op       |______path_____|     value
@@ -64,7 +68,7 @@ def json_patch(change):
 
         key = values[0][0]
         path = json_path(path_segments + [key])
-        return {"op": op, "path": path}
+        return {"op": "remove", "path": path}
 
     raise ValueError(f"Unknown patch operation: {op}")
 

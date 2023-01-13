@@ -1,3 +1,5 @@
+PYTHONPATH=./shell_operator
+
 .PHONY: build test clean publish
 build:
 	poetry build
