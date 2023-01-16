@@ -10,7 +10,7 @@ def test_value_change_is_stored():
 
     assert outputs.values.a == 42
     assert outputs.values_patches.data == [
-        {"op": "replace", "path": "/a", "value": 42},
+        {"op": "add", "path": "/a", "value": 42},
     ]
 
 
@@ -73,8 +73,8 @@ def test_list_values_changes_have_separate_patches():
     outputs = hook.testrun(main, initial_values=initial_values)
 
     assert outputs.values_patches.data == [
-        {"op": "add", "path": "/a/1", "value": 42},
-        {"op": "add", "path": "/a/2", "value": 101},
+        {"op": "remove", "path": "/a"},
+        {"op": "add", "path": "/a", "value": [33, 42, 101]},
     ]
 
 
@@ -96,6 +96,31 @@ def test_values_do_not_support_sets():
     outputs = hook.testrun(main, initial_values=initial_values)
 
     assert outputs.values_patches.data != [
-        {"op": "add", "path": "/a/1", "value": 42},
-        {"op": "add", "path": "/a/2", "value": 101},
+        {"op": "remove", "path": "/a"},
+        {"op": "add", "path": "/a", "value": [33, 42, 101]},
+    ]
+
+
+def test_values_arrays_are_manipulated_as_whole():
+    """
+    Since we are not only contrained to "add" and "remove", we also have to treat arrays as whole,
+    we remove it first and add new instead of patching it.
+    """
+
+    def main(ctx):
+        del ctx.values.old
+        ctx.values.a.current = [2, 4, 1, 5, 6, 3]
+        ctx.values.new = [7, 8, 9]
+
+    initial_values = {
+        "old": [1, 2, 3],
+        "current": [4, 5, 6],
+    }
+    outputs = hook.testrun(main, initial_values=initial_values)
+
+    assert outputs.values_patches.data != [
+        {"op": "remove", "path": "/old"},
+        {"op": "remove", "path": "/current"},
+        {"op": "add", "path": "/current", "value": [2, 4, 1, 5, 6, 3]},
+        {"op": "add", "path": "/new", "value": [7, 8, 9]},
     ]
