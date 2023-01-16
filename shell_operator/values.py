@@ -36,11 +36,18 @@ def values_json_patches(initial_values: dict, updated_values: dict):
     )
     pg = PatchGenerator(updated_values)
     for change in changes:
-        for p in pg.generate(change):
-            yield p
+        for patch in pg.generate(change):
+            yield patch
 
 
 class PatchGenerator:
+    """
+    Generates appropriate JSON patches for the dictdiffer changes to be useful in Addon Operator.
+
+    Addon Operator does not permit using "replace" operation, so we use "add" instead. And we treat
+    arrays as whole. We have to remove them and set the new value instead of patching them.
+    """
+
     def __init__(self, updated_values: dict):
         self.updated_values = updated_values
         self.seen_array_paths = set()
@@ -99,11 +106,15 @@ class PatchGenerator:
 
     def __array_patches(self, path_segments: Iterable):
         path = json_path(path_segments)
+
+        # avoid duplicate array patches
         if path in self.seen_array_paths:
-            return  # avoid duplicate array patch
+            return
         self.seen_array_paths.add(path)
 
+        # pick the value by path
         value = reduce(operator.getitem, path_segments, self.updated_values)
+
         yield {"op": "remove", "path": path}
         yield {"op": "add", "path": path, "value": value}
 
