@@ -82,8 +82,8 @@ def test_values_do_not_support_sets():
     """
     This tests shows the set-list mismatch on Python side in the changes.
 
-    Sets will actually break hooks because they are not JSON-serializable and wriring patches to
-    files uses `json.dumps`. User can always do list(set) in values.
+    Sets will actually break hooks because they are not JSON-serializable, and we write patches to
+    uses `json.dumps`. User can always do list(set) in values.
 
     """
 
