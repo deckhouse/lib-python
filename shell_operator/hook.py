@@ -60,11 +60,32 @@ class Output:
 
 @dataclass
 class Context:
-    def __init__(self, binding_context: dict, initial_values: dict, output: Output):
+    def __init__(
+        self,
+        binding_context: dict,
+        config_values: dict,
+        initial_values: dict,
+        output: Output,
+        module_name: str,
+    ):
         self.binding_context = binding_context
         self.snapshots = binding_context.get("snapshots", {})
-        self.values = DotMap(deepcopy(initial_values))  # DotMap for values.dot.notation
         self.output = output
+        self.module_name = module_name
+
+        # DotMap for values.dot.notation and config.dot.notation
+        # Helm: .Values.moduleName
+        # Hook: ctx.config
+        self.config = dotmapcopy(config_values)
+        # Helm: .Values.moduleName.internal
+        # Hook: ctx.values
+        self.values = dotmapcopy(initial_values)
+
+    @property
+    def internal(self):
+        if not self.module_name:
+            raise ValueError("Module name is not set")
+        return self.values[self.module_name].internal
 
     @property
     def metrics(self):
@@ -79,15 +100,17 @@ class Context:
         return self.output.values_patches
 
 
+def dotmapcopy(d: dict):
+    return DotMap(deepcopy(d))
+
+
 def read_binding_context_file():
     """
     Iterates over hook contexts in the binding context file.
 
     :yield ctx: hook binding context
     """
-    context_path = os.getenv("BINDING_CONTEXT_PATH")
-    with open(context_path, "r", encoding="utf-8") as f:
-        context = json.load(f)
+    context = read_json_file("BINDING_CONTEXT_PATH") or []
     for ctx in context:
         yield ctx
 
@@ -98,27 +121,73 @@ def read_values_file():
 
     :return values: the dict of the values
     """
-    values_path = os.getenv("VALUES_PATH")
+    return read_json_file("VALUES_PATH") or {}
+
+
+def read_config_file():
+    """
+    Reads module config from the config values file.
+
+    :return values: the dict of the values
+    """
+    return read_json_file("CONFIG_VALUES_PATH") or {}
+
+
+def read_json_file(envvar):
+    """
+    Reads module values from the values file.
+
+    :return values: the dict of the values
+    """
+    values_path = os.getenv(envvar)
     if not values_path:
         # No values in Shell Operator
-        return {}
+        return None
     with open(values_path, "r", encoding="utf-8") as f:
         values = json.load(f)
     return values
 
 
-def __run(func, binding_context: list, initial_values: dict):
+def read_module_dirname():
+    return os.getenv("D8_MODULE_NAME")
+
+
+def noprefixnum_camelcase(mod_dir):
+    """Translates 123-some-module-name to someModuleName
+
+    Args:
+        mod_dir (_type_): the dir name of the module, e.g. 123-some-module-name
+    """
+    if not mod_dir:
+        return ""
+    parts = mod_dir.split("-")[1:]
+    for i in range(1, len(parts)):
+        parts[i] = parts[i].capitalize()
+    return "".join(parts)
+
+
+def __run(
+    func,
+    binding_context: list,
+    config_values: dict,
+    initial_values: dict,
+    module_name: str,
+):
     """
     Run the hook function with config. Accepts config path or config text.
 
     :param func: the function to run
     :param binding_context: the list of hook binding contexts
+    :param config_values: config values
     :param initial_values: initial values
+    :param module_name: module name in camelCase
     :return output: output means with all generated payloads and updated values
     """
 
     if not binding_context:
         binding_context = [{}]
+    if not config_values:
+        config_values = DotMap()
     if not initial_values:
         initial_values = DotMap()
 
@@ -129,7 +198,7 @@ def __run(func, binding_context: list, initial_values: dict):
     )
 
     for bindctx in binding_context:
-        hookctx = Context(bindctx, initial_values, output)
+        hookctx = Context(bindctx, config_values, initial_values, output, module_name)
         func(hookctx)
         output.values = hookctx.values
         output.values_patches.update(hookctx.values)
@@ -159,8 +228,10 @@ def run(func, configpath=None, config=None):
 
     binding_context = read_binding_context_file()
     initial_values = read_values_file()
+    config_values = read_config_file()
+    module_name = noprefixnum_camelcase(read_module_dirname())
 
-    output = __run(func, binding_context, initial_values)
+    output = __run(func, binding_context, config_values, initial_values, module_name)
 
     output.flush()
 
@@ -168,7 +239,9 @@ def run(func, configpath=None, config=None):
 def testrun(
     func,
     binding_context: Iterable = None,
+    config_values: dict = None,
     initial_values: dict = None,
+    module_name: str = "module",
 ) -> Output:
     """
     Test-run the hook function. Accepts binding context and initial values.
@@ -181,5 +254,5 @@ def testrun(
     :return: output means for metrics and kubernetes
     """
 
-    output = __run(func, binding_context, initial_values)
+    output = __run(func, binding_context, config_values, initial_values, module_name)
     return output
