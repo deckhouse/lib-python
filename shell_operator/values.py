@@ -3,6 +3,8 @@
 # Copyright 2023 Flant JSC Licensed under Apache License 2.0
 #
 
+import operator
+from functools import reduce
 from typing import Iterable
 
 from dictdiffer import deepcopy, diff
@@ -32,45 +34,89 @@ def values_json_patches(initial_values: dict, updated_values: dict):
         dot_notation=False,  # always return path as list
         expand=True,  # do not compact values in single operation
     )
+    pg = PatchGenerator(updated_values)
     for change in changes:
-        yield json_patch(change)
+        for patch in pg.generate(change):
+            yield patch
 
 
-def json_patch(change):
+class PatchGenerator:
     """
-    Trtansform dictdiffer change to JSON patch.
-    https://jsonpatch.com/#operations
+    Generates appropriate JSON patches for the dictdiffer changes to be useful in Addon Operator.
+
+    Addon Operator does not permit using "replace" operation, so we use "add" instead. And we treat
+    arrays as whole. We have to remove them and set the new value instead of patching them.
     """
-    op, path_segments, values = change
 
-    if op == "add":
-        #   op    |______path_________|   value
-        #    |    |                   |  /
-        # ('add', ['x', 'y', 'a'], [(2, 2)])
+    def __init__(self, updated_values: dict):
+        self.updated_values = updated_values
+        self.seen_array_paths = set()
 
-        key, value = values[0]
-        path = json_path(path_segments + [key])
-        return {"op": "add", "path": path, "value": value}
+    def generate(self, change):
+        """
+        Converts dictdiffer change to JSON patches.
+        https://jsonpatch.com/#operations
+        """
+        op, path_segments, values = change
 
-    if op == "change":
-        #   op       |______path______|  from  to
-        #    |       |                |   |   /
-        # ('change', ['x', 'y', 'a', 0], (1, 0))
+        if op == "add":
+            #   op    |______path_________|   value
+            #    |    |                   |  /
+            # ('add', ['x', 'y', 'a'], [(2, 2)])
 
-        value = values[1]
+            key, value = values[0]
+
+            if len(path_segments) > 0 and isinstance(key, int):
+                # array element
+                for p in self.__array_patches(path_segments):
+                    yield p
+                return
+
+            path = json_path(path_segments + [key])
+            yield {"op": "add", "path": path, "value": value}
+            return
+
+        if op == "change":
+            #   op       |______path______|  from  to
+            #    |       |                |   |   /
+            # ('change', ['x', 'y', 'a', 0], (1, 0))
+
+            if len(path_segments) > 0 and isinstance(path_segments[-1], int):
+                # array element, excluding index from the path
+                for p in self.__array_patches(path_segments[:-1]):
+                    yield p
+                return
+
+            value = values[1]
+            path = json_path(path_segments)
+            yield {"op": "add", "path": path, "value": value}
+            return
+
+        if op == "remove":
+            #   op       |______path_____|     value
+            #    |       |               |    /
+            # ('remove', ['x', 'y'], [('t', 0)])
+
+            key = values[0][0]
+            path = json_path(path_segments + [key])
+            yield {"op": "remove", "path": path}
+            return
+
+        raise ValueError(f"Unknown patch operation: {op}")
+
+    def __array_patches(self, path_segments: Iterable):
         path = json_path(path_segments)
-        return {"op": "replace", "path": path, "value": value}
 
-    if op == "remove":
-        #   op       |______path_____|     value
-        #    |       |               |    /
-        # ('remove', ['x', 'y'], [('t', 0)])
+        # avoid duplicate array patches
+        if path in self.seen_array_paths:
+            return
+        self.seen_array_paths.add(path)
 
-        key = values[0][0]
-        path = json_path(path_segments + [key])
-        return {"op": "remove", "path": path}
+        # pick the value by path
+        value = reduce(operator.getitem, path_segments, self.updated_values)
 
-    raise ValueError(f"Unknown patch operation: {op}")
+        yield {"op": "remove", "path": path}
+        yield {"op": "add", "path": path, "value": value}
 
 
 def json_path(path: Iterable):
