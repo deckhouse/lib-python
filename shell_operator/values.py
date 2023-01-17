@@ -54,7 +54,7 @@ class PatchGenerator:
 
     def generate(self, change):
         """
-        Trtansform dictdiffer change to JSON patch.
+        Converts dictdiffer change to JSON patches.
         https://jsonpatch.com/#operations
         """
         op, path_segments, values = change
@@ -82,7 +82,7 @@ class PatchGenerator:
             # ('change', ['x', 'y', 'a', 0], (1, 0))
 
             if len(path_segments) > 0 and isinstance(path_segments[-1], int):
-                # array element, exluding index from the path
+                # array element, excluding index from the path
                 for p in self.__array_patches(path_segments[:-1]):
                     yield p
                 return
