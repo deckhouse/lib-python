@@ -76,13 +76,28 @@ class Context:
         # DotMap for values.dot.notation and config.dot.notation
         # Helm: .Values.moduleName
         # Hook: ctx.config
-        self.config = dotmapcopy(config_values)
+        self.config_values = dotmapcopy(config_values)
         # Helm: .Values.moduleName.internal
         # Hook: ctx.values
         self.values = dotmapcopy(initial_values)
 
     @property
+    def config(self):
+        """Module config derived from module settings and config values schema"""
+        if not self.module_name:
+            raise ValueError("Module name is not set")
+        return self.config_values[self.module_name]
+
+    @property
+    def globals(self):
+        """Global values
+
+        'global' is a reserved word, so we canot use it"""
+        return self.config_values["global"]
+
+    @property
     def internal(self):
+        """Internal values"""
         if not self.module_name:
             raise ValueError("Module name is not set")
         return self.values[self.module_name].internal
@@ -149,7 +164,7 @@ def read_json_file(envvar):
 
 
 def read_module_dirname():
-    return os.getenv("D8_MODULE_NAME")
+    return os.getenv("D8_MODULE_DIRNAME")
 
 
 def noprefixnum_camelcase(mod_dir):
