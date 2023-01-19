@@ -8,13 +8,12 @@ Deckhouse module SDK simplifies writing module hooks for operators:
 
 **NOTE**:
 - The API is in alpha stage
-- The name will change from `shell-operator` to something more deckhouse-related, probably,
-  `deckhouse-sdk`
+
 
 ## Install
 
 ```bash
-pip install shell-operator
+pip install deckhouse-sdk
 ```
 
 ## Sample hook
