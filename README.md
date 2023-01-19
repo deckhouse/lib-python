@@ -1,6 +1,15 @@
-# Shell Operator Python Framework
+# Deckhouse module SDK
 
-Simplifies writing [shell-operator](https://github.com/flant/shell-operator) hooks in Python.
+Deckhouse module SDK simplifies writing module hooks for operators:
+
+- [Deckhouse](https://github.com/deckhouse/deckhouse)
+- [Addon Operator](https://github.com/flant/addon-operator)
+- [Shell Operator](https://github.com/flant/shell-operator) (values are unaccessable)
+
+**NOTE**:
+- The API is in alpha stage
+- The name will change from `shell-operator` to something more deckhouse-related, probably,
+  `deckhouse-sdk`
 
 ## Install
 

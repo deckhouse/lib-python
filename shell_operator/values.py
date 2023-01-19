@@ -5,7 +5,6 @@
 
 import operator
 from functools import reduce
-from typing import Iterable
 
 from dictdiffer import deepcopy, diff
 
