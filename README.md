@@ -21,7 +21,7 @@ pip install shell-operator
 
 ```python
 # hello.py
-from shell_operator import hook
+from deckhouse_sdk import hook
 
 def main(ctx: hook.Context):
     # Manipulate kubernetes state
@@ -54,7 +54,7 @@ An example for pytest
 # hello_test.py
 
 from hello import main
-from shell_operator import hook
+from deckhouse_sdk import hook
 
 # Inputs
 #   initial_values = { ... }

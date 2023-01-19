@@ -1,4 +1,4 @@
-PYTHONPATH=./shell_operator
+PYTHONPATH=./deckhouse_sdk
 
 .PHONY: build test clean publish
 build:

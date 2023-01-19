@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "shell_operator"
+name = "deckhouse_sdk"
 version = "0.0.5"
 authors = [
         { name = "Eugene Shevchenko", email = "evgeny.shevchenko@flant.com" },
@@ -18,5 +18,5 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/flant/py-shell-operator"
-"Bug Tracker" = "https://github.com/flant/py-shell-operator/issues"
+"Homepage" = "https://github.com/flant/py-deckhouse-sdk"
+"Bug Tracker" = "https://github.com/flant/py-deckhouse-sdk/issues"

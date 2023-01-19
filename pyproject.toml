@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "shell-operator"
-version = "0.1.2"
+name = "deckhouse-sdk"
+version = "0.2.0"
 description = "Python SDK for Shell Operator hooks"
 authors = ["Eugene Shevchenko <evgeny.shevchenko@flant.com>"]
 license = "Apache License 2.0"
 readme = "README.md"
-packages = [{include = "shell_operator"}]
+packages = [{include = "deckhouse_sdk"}]
 
 
 [tool.poetry.dependencies]
