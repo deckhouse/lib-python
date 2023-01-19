@@ -52,12 +52,12 @@ def read_json_file(envvar):
     return values
 
 
-def get_module_root():
+def get_root():
     return os.getenv("D8_MODULE_ROOT") or ""
 
 
-def get_module_name():
-    mod_root = get_module_root()
+def get_name():
+    mod_root = get_root()
     _, mod_dir = os.path.split(mod_root)
     return noprefixnum_camelcase(mod_dir)
 

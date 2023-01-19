@@ -13,7 +13,9 @@ from dotmap import DotMap
 
 from .kubernetes import KubeOperationCollector
 from .metrics import MetricsCollector
-from .module import get_binding_context, get_config, get_module_name, get_values
+from .module import get_binding_context, get_config
+from .module import get_name as get_module_name
+from .module import get_values
 from .storage import FileStorage
 from .values import ValuesPatchesCollector
 
