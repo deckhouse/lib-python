@@ -86,10 +86,8 @@ class Context:
         """Module config derived from module settings and config values schema"""
         if not self.module_name:
             raise ValueError("Module name is not set")
-        if self.module_name not in self.config_values:
-            raise ValueError(
-                f"No key '{self.module_name}' in config values, wrong module name?"
-            )
+        # The module name key actually can be absent, e.g. in tests, hence we are fine DotMap will
+        # tolerate that.
         return self.config_values[self.module_name]
 
     @property
@@ -104,10 +102,8 @@ class Context:
         """Internal values"""
         if not self.module_name:
             raise ValueError("Module name is not set")
-        if self.module_name not in self.values:
-            raise ValueError(
-                f"No key '{self.module_name}' in values, wrong module name?"
-            )
+        # The module name key actually can be absent, e.g. in tests, hence we are fine DotMap will
+        # tolerate that.
         return self.values[self.module_name].internal
 
     @property

@@ -53,7 +53,7 @@ def read_json_file(envvar):
 
 
 def get_module_root():
-    return os.getenv("D8_MODULE_ROOT") or None
+    return os.getenv("D8_MODULE_ROOT") or ""
 
 
 def get_module_name():
