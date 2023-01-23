@@ -1,3 +1,5 @@
+from dotmap import DotMap
+
 from deckhouse_sdk import hook
 
 
@@ -123,4 +125,34 @@ def test_values_arrays_are_manipulated_as_whole():
         {"op": "remove", "path": "/current"},
         {"op": "add", "path": "/current", "value": [2, 4, 1, 5, 6, 3]},
         {"op": "add", "path": "/new", "value": [7, 8, 9]},
+    ]
+
+
+def test_internal_patch():
+    def main(ctx):
+        ctx.values.dummyModuleName.internal.count += 1
+        if ctx.values.dummyModuleName.array:
+            ctx.values.dummyModuleName.internal.statement = "THE ARRAY IS HERE"
+        else:
+            ctx.values.dummyModuleName.internal.statement = "NO ARRAY IN CONFIG"
+
+    initial_values = DotMap()
+    initial_values.dummyModuleName = {
+        "array": [2, 3, 4],
+        "internal": {},
+        "statement": "c_o_n_f_i_g",
+    }
+
+    outputs = hook.testrun(main, initial_values=initial_values)
+
+    assert outputs.values.dummyModuleName.internal.count == 1
+    assert outputs.values.dummyModuleName.internal.statement == "THE ARRAY IS HERE"
+
+    assert outputs.values_patches.data == [
+        {"op": "add", "path": "/dummyModuleName/internal/count", "value": 1},
+        {
+            "op": "add",
+            "path": "/dummyModuleName/internal/statement",
+            "value": "THE ARRAY IS HERE",
+        },
     ]
