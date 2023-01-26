@@ -68,7 +68,7 @@ class PatchGenerator:
         op, path_segments, values = change
 
         if op == "add":
-            #   op    |______path_________|   value
+            #   op    |_______path________|   value
             #    |    |                   |  /
             # ('add', ['x', 'y', 'a'], [(2, 2)])
 
