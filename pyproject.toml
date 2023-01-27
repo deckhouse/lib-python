@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "deckhouse-sdk"
-version = "0.2.2"
+version = "0.3.0"
 description = "Python SDK for Shell Operator hooks"
 authors = ["Eugene Shevchenko <evgeny.shevchenko@flant.com>"]
 license = "Apache License 2.0"
