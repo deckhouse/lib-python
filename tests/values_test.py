@@ -7,7 +7,7 @@ def test_value_change_is_stored():
     def main(ctx):
         ctx.values.a = 42
 
-    initial_values = {"a": 33}
+    initial_values = DotMap({"a": 33})
     outputs = hook.testrun(main, initial_values=initial_values)
 
     assert outputs.values.a == 42
@@ -20,7 +20,7 @@ def test_unchanged_value_generates_no_patches():
     def main(ctx):
         ctx.values.a = 42
 
-    initial_values = {"a": 42}
+    initial_values = DotMap({"a": 42})
     outputs = hook.testrun(main, initial_values=initial_values)
 
     assert outputs.values.a == 42
@@ -31,7 +31,7 @@ def test_added_value_is_stored():
     def main(ctx):
         ctx.values.b = 42
 
-    initial_values = {"a": 33}
+    initial_values = DotMap({"a": 33})
     outputs = hook.testrun(main, initial_values=initial_values)
 
     assert outputs.values.a == 33
@@ -45,7 +45,7 @@ def test_removed_value_is_not_stored():
     def main(ctx):
         del ctx.values.a
 
-    initial_values = {"a": 33}
+    initial_values = DotMap({"a": 33})
     outputs = hook.testrun(main, initial_values=initial_values)
 
     assert not outputs.values
@@ -60,7 +60,7 @@ def test_initial_values_remain_unchanged():
         ctx.values.b = 99  # change
         ctx.values.c = 101  # add
 
-    initial_values = {"a": 33, "b": 42}
+    initial_values = DotMap({"a": 33, "b": 42})
     outputs = hook.testrun(main, initial_values=initial_values)
 
     assert outputs.values_patches.initial_values == initial_values
@@ -71,7 +71,7 @@ def test_list_values_changes_have_separate_patches():
         ctx.values.a.append(42)
         ctx.values.a.append(101)
 
-    initial_values = {"a": [33]}
+    initial_values = DotMap({"a": [33]})
     outputs = hook.testrun(main, initial_values=initial_values)
 
     assert outputs.values_patches.data == [
@@ -94,7 +94,7 @@ def test_values_do_not_support_sets():
         ctx.values.a.add(42)
         ctx.values.a.add(101)
 
-    initial_values = {"a": [33]}
+    initial_values = DotMap({"a": [33]})
     outputs = hook.testrun(main, initial_values=initial_values)
 
     assert outputs.values_patches.data != [
@@ -114,10 +114,12 @@ def test_values_arrays_are_manipulated_as_whole():
         ctx.values.a.current = [2, 4, 1, 5, 6, 3]
         ctx.values.new = [7, 8, 9]
 
-    initial_values = {
-        "old": [1, 2, 3],
-        "current": [4, 5, 6],
-    }
+    initial_values = DotMap(
+        {
+            "old": [1, 2, 3],
+            "current": [4, 5, 6],
+        }
+    )
     outputs = hook.testrun(main, initial_values=initial_values)
 
     assert outputs.values_patches.data != [
