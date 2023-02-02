@@ -1,6 +1,6 @@
 from dotmap import DotMap
 
-from deckhouse_sdk import hook
+from deckhouse import hook
 
 
 def test_value_change_is_stored():

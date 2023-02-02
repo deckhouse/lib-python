@@ -1,6 +1,6 @@
-# Deckhouse module SDK
+# Deckhouse python library
 
-Deckhouse module SDK simplifies writing module hooks for operators:
+Simplifies writing module hooks for Kubernetes operators:
 
 - [Deckhouse](https://github.com/deckhouse/deckhouse)
 - [Addon Operator](https://github.com/flant/addon-operator)
@@ -13,14 +13,14 @@ Deckhouse module SDK simplifies writing module hooks for operators:
 ## Install
 
 ```bash
-pip install deckhouse-sdk
+pip install deckhouse
 ```
 
 ## Sample hook
 
 ```python
 # hello.py
-from deckhouse_sdk import hook
+from deckhouse import hook
 
 def main(ctx: hook.Context):
     # Manipulate kubernetes state
@@ -53,7 +53,7 @@ An example for pytest
 # hello_test.py
 
 from hello import main
-from deckhouse_sdk import hook
+from deckhouse import hook
 
 # Inputs
 #   initial_values = { ... }

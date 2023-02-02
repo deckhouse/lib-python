@@ -1,4 +1,4 @@
-from deckhouse_sdk import hook
+from deckhouse import hook
 
 
 def setup():
