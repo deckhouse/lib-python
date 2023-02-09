@@ -110,23 +110,41 @@ def test_values_arrays_are_manipulated_as_whole():
     """
 
     def main(ctx):
-        del ctx.values.old
-        ctx.values.a.current = [2, 4, 1, 5, 6, 3]
-        ctx.values.new = [7, 8, 9]
+        v = DotMap(ctx.values)
+        del v.removed
+        v.updated = [2, 4, 1, 5, 6, 3]
+        v.new = [10, 11, 12]
+        v.shrinked = v.shrinked[1:]
+        ctx.values = v.toDict()
 
-    initial_values = DotMap(
-        {
-            "old": [1, 2, 3],
-            "current": [4, 5, 6],
-        }
-    )
+    initial_values = {
+        "removed": [1, 2, 3],
+        "updated": [4, 5, 6],
+        "shrinked": [7, 8, 9],
+    }
+
     outputs = hook.testrun(main, initial_values=initial_values)
+    patches = outputs.values_patches.data
 
-    assert outputs.values_patches.data != [
-        {"op": "remove", "path": "/old"},
-        {"op": "remove", "path": "/current"},
-        {"op": "add", "path": "/current", "value": [2, 4, 1, 5, 6, 3]},
-        {"op": "add", "path": "/new", "value": [7, 8, 9]},
+    # assert {
+    #     "op": "remove",
+    #     "path": "/updated",
+    # } in patches, "updated should be through removal"
+    # assert {
+    #     "op": "add",
+    #     "path": "/updated",
+    #     "value": [2, 4, 1, 5, 6, 3],
+    # } in patches, "updated values should be set"
+    # from pprint import pprint
+
+    # pprint(patches)
+    assert outputs.values_patches.data == [
+        {"op": "remove", "path": "/updated"},
+        {"op": "add", "path": "/updated", "value": [2, 4, 1, 5, 6, 3]},
+        {"op": "remove", "path": "/shrinked"},
+        {"op": "add", "path": "/shrinked", "value": [8, 9]},
+        {"op": "add", "path": "/new", "value": [10, 11, 12]},
+        {"op": "remove", "path": "/removed"},
     ]
 
 
