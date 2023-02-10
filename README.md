@@ -4,7 +4,7 @@ Simplifies writing module hooks for Kubernetes operators:
 
 - [Deckhouse](https://github.com/deckhouse/deckhouse)
 - [Addon Operator](https://github.com/flant/addon-operator)
-- [Shell Operator](https://github.com/flant/shell-operator) (values are unaccessable)
+- [Shell Operator](https://github.com/flant/shell-operator) (values are unaccessible)
 
 **NOTE**:
 - The API is in alpha stage
@@ -71,5 +71,5 @@ def test_hello():
     assert out.kube_operations.data == expected_kube_operations
     assert out.values_patches.data == expected_values_patches
 
-    assert out.values.myModule.deployment.repicas == 5
+    assert out.values.myModule.deployment.replicas == 5
 ```

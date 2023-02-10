@@ -105,8 +105,8 @@ def test_values_do_not_support_sets():
 
 def test_values_arrays_are_manipulated_as_whole():
     """
-    Since we are not only contrained to "add" and "remove", we also have to treat arrays as whole,
-    we remove it first and add new instead of patching it.
+    Since we only can use "add" and "remove", we have to treat arrays as whole. We remove an array
+    first, and add new one instead of patching it.
     """
 
     def main(ctx):
@@ -114,13 +114,13 @@ def test_values_arrays_are_manipulated_as_whole():
         del v.removed
         v.updated = [2, 4, 1, 5, 6, 3]
         v.new = [10, 11, 12]
-        v.shrinked = v.shrinked[1:]
+        v.trimmed = v.trimmed[1:]
         ctx.values = v.toDict()
 
     initial_values = {
         "removed": [1, 2, 3],
         "updated": [4, 5, 6],
-        "shrinked": [7, 8, 9],
+        "trimmed": [7, 8, 9],
     }
 
     outputs = hook.testrun(main, initial_values=initial_values)
@@ -128,8 +128,8 @@ def test_values_arrays_are_manipulated_as_whole():
     assert outputs.values_patches.data == [
         {"op": "remove", "path": "/updated"},
         {"op": "add", "path": "/updated", "value": [2, 4, 1, 5, 6, 3]},
-        {"op": "remove", "path": "/shrinked"},
-        {"op": "add", "path": "/shrinked", "value": [8, 9]},
+        {"op": "remove", "path": "/trimmed"},
+        {"op": "add", "path": "/trimmed", "value": [8, 9]},
         {"op": "add", "path": "/new", "value": [10, 11, 12]},
         {"op": "remove", "path": "/removed"},
     ]
