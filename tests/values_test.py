@@ -124,20 +124,7 @@ def test_values_arrays_are_manipulated_as_whole():
     }
 
     outputs = hook.testrun(main, initial_values=initial_values)
-    patches = outputs.values_patches.data
 
-    # assert {
-    #     "op": "remove",
-    #     "path": "/updated",
-    # } in patches, "updated should be through removal"
-    # assert {
-    #     "op": "add",
-    #     "path": "/updated",
-    #     "value": [2, 4, 1, 5, 6, 3],
-    # } in patches, "updated values should be set"
-    # from pprint import pprint
-
-    # pprint(patches)
     assert outputs.values_patches.data == [
         {"op": "remove", "path": "/updated"},
         {"op": "add", "path": "/updated", "value": [2, 4, 1, 5, 6, 3]},
