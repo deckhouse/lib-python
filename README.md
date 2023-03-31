@@ -73,3 +73,10 @@ def test_hello():
 
     assert out.values.myModule.deployment.replicas == 5
 ```
+
+## Development
+
+- Create virtual environment with python >= 3.10
+- [Install poetry](https://python-poetry.org/docs/#installation)
+- `poetry install`
+- `make test`
