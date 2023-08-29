@@ -19,19 +19,31 @@ class KubeOperationCollector:
         """
         :param obj: must be serializable to JSON
         """
-        self.collect({"operation": "Create", "object": obj})
+        self.__create("Create", obj)
 
     def create_or_update(self, obj):
         """
         :param obj: must be serializable to JSON
         """
-        self.collect({"operation": "CreateOrUpdate", "object": obj})
+        self.__create("CreateOrUpdate", obj)
 
     def create_if_not_exists(self, obj):
         """
         :param obj: must be serializable to JSON
         """
-        self.collect({"operation": "CreateIfNotExists", "object": obj})
+        self.__create("CreateIfNotExists", obj)
+
+    def __create(self, operation, obj):
+        """
+        :param op: known creation operation
+        :param obj: must be serializable to JSON
+        """
+        known = ("Create", "CreateOrUpdate", "CreateIfNotExists")
+        if operation not in known:
+            raise ValueError(
+                f'Invalid creation operation: "{operation}", known are {", ".join(known)}'
+            )
+        self.collect({"operation": operation, "object": obj})
 
     def __delete(
         self, operation, kind, namespace, name, apiVersion=None, subresource=None
@@ -45,20 +57,24 @@ class KubeOperationCollector:
         :param subresource: a subresource name if subresource is to be transformed. For example,
             status.
         """
-        if operation not in ("Delete", "DeleteInBackground", "DeleteNonCascading"):
-            raise ValueError(f"Invalid delete operation: {operation}")
+        known = ("Delete", "DeleteInBackground", "DeleteNonCascading")
+        if operation not in known:
+            raise ValueError(
+                f'Invalid deletion operation: "{operation}", known are {", ".join(known)}'
+            )
 
-        obj = {
+        ret = {
+            "operation": operation,
             "kind": kind,
             "namespace": namespace,
             "name": name,
         }
         if apiVersion is not None:
-            obj["apiVersion"] = apiVersion
+            ret["apiVersion"] = apiVersion
         if subresource is not None:
-            obj["subresource"] = subresource
+            ret["subresource"] = subresource
 
-        self.collect({"operation": operation, "object": obj})
+        self.collect(ret)
 
     def delete(self, kind, namespace, name, apiVersion=None, subresource=None):
         """
