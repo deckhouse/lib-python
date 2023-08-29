@@ -1,5 +1,3 @@
-from dotmap import DotMap
-
 from deckhouse import hook
 
 
