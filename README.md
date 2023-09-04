@@ -76,7 +76,7 @@ def test_hello():
 
 ## Development
 
-- Create virtual environment with python >= 3.10
+- Create virtual environment with python >= 3.8
 - [Install poetry](https://python-poetry.org/docs/#installation)
 - `poetry install`
 - `make test`
