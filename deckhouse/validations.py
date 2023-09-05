@@ -4,6 +4,9 @@
 #
 
 
+import typing
+
+
 class ValidationsCollector:
     """
     Wrapper for the validating feature of Shell Operator.
@@ -33,7 +36,7 @@ class ValidationsCollector:
             response["warnings"] = warnings
         self.collect(response)
 
-    def deny(self, message: str | None = None):
+    def deny(self, message: typing.Union[str, None] = None):
         response = {"allowed": False}
         if message is not None:
             response["message"] = message

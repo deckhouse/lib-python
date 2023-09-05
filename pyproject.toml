@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "deckhouse"
-version = "0.4.6"
+version = "0.4.7"
 description = "Wrapper for hooks for Deckhouse, Addon Operator, and Shell Operator by Flant"
 authors = ["Eugene Shevchenko <evgeny.shevchenko@flant.com>"]
 license = "Apache License 2.0"
@@ -9,7 +9,7 @@ packages = [{ include = "deckhouse" }]
 
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.8"
 dictdiffer = "^0.9.0"
 
 [tool.poetry.group.dev.dependencies]
