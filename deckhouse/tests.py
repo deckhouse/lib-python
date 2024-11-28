@@ -90,7 +90,7 @@ def assert_common_resource_fields(t: unittest.TestCase, obj: dict, api_version: 
         t.assertEqual(obj["metadata"]["namespace"], namespace)
 
 # res: dict | typing.List[dict] | typing.Callable[[unittest.TestCase, typing.List[dict]], None]
-def assert_conversion(t: unittest.TestCase, o: Output, res: typing.Union[dict, typing.List[dict], typing.Callable[[unittest.TestCase, typing.List[dict]], None]], failed_msg: str):
+def assert_conversion(t: unittest.TestCase, o: Output, res: typing.Union[dict, typing.List[dict], typing.Callable[[unittest.TestCase, typing.List[dict]], None]], failed_msg: typing.Union[str, None]):
     """
         Assert result of conversion webhook
 
