@@ -6,6 +6,20 @@
 
 import typing
 
+# What a webhook hands over as warnings or a message: a string, a list of them, or nothing.
+Messages = typing.Union[str, typing.Iterable[str], None]
+
+
+def _strings(values) -> tuple:
+    """The non-empty strings of `values`, with lists and tuples among them unpacked."""
+    result = []
+    for value in values:
+        if isinstance(value, (list, tuple)):
+            result.extend(_strings(value))
+        elif value:
+            result.append(value)
+    return tuple(result)
+
 
 class ValidationsCollector:
     """
@@ -30,16 +44,20 @@ class ValidationsCollector:
         """
         return self._data
 
-    def allow(self, *warnings: str):
+    def allow(self, *warnings: Messages):
+        """Allows the request. Each warning is a string or a list of them; empty ones are dropped."""
+        warnings = _strings(warnings)
         response = {"allowed": True}
-        if len(warnings) > 0:
+        if warnings:
             response["warnings"] = warnings
         self.collect(response)
 
-    def deny(self, message: typing.Union[str, None] = None):
+    def deny(self, message: Messages = None):
+        """Denies the request. A list of messages becomes one message, joined with "; "."""
+        messages = _strings([message])
         response = {"allowed": False}
-        if message is not None:
-            response["message"] = message
+        if messages:
+            response["message"] = "; ".join(messages)
         self.collect(response)
 
     def error(self, message: str):
