@@ -6,6 +6,8 @@
 
 import typing
 
+from dotmap import DotMap
+
 # What a webhook hands over as warnings or a message: a string, a list of them, or nothing.
 Messages = typing.Union[str, typing.Iterable[str], None]
 
@@ -62,3 +64,21 @@ class ValidationsCollector:
 
     def error(self, message: str):
         self.collect({"allowed": False, "message": f"Internal webhook error: {message}"})
+
+
+def handle(ctx, validate: typing.Callable[[DotMap], typing.Tuple[Messages, bool]]):
+    """Answers the admission request of the hook context `ctx` with the result of `validate`.
+
+    This is the main of the hook webhook-operator renders for a ValidationWebhook.
+    validate(binding_context) gets the binding context as a DotMap and returns (message, allowed).
+    The message is a string, a list of them or None: warnings for an allowed request, the reason
+    for a denied one. An exception becomes an internal webhook error.
+    """
+    try:
+        message, allowed = validate(DotMap(ctx.binding_context))
+        if allowed:
+            ctx.output.validations.allow(message)
+        else:
+            ctx.output.validations.deny(message)
+    except Exception as e:
+        ctx.output.validations.error(str(e))

@@ -1,4 +1,4 @@
-from deckhouse import hook
+from deckhouse import hook, validations
 
 
 def run(handler):
@@ -44,3 +44,11 @@ def test_error_is_a_denial_with_the_message():
     # requester sees a denial without a reason.
     data = run(lambda ctx: ctx.output.validations.error("snapshot is missing"))
     assert data == [{"allowed": False, "message": "Internal webhook error: snapshot is missing"}]
+
+
+def test_handle_answers_with_the_result_of_validate():
+    def main(ctx):
+        validations.handle(ctx, lambda bc: (bc.warnings, True))
+
+    data = hook.testrun(main, [{"warnings": ["first", "second"]}]).validations.data
+    assert data == [{"allowed": True, "warnings": ("first", "second")}]

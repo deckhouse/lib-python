@@ -3,9 +3,16 @@
 # Copyright 2024 Flant JSC Licensed under Apache License 2.0
 #
 
+import copy
+import sys
+import types
 import unittest
 import typing
+from pathlib import Path
 
+from dotmap import DotMap
+
+from . import hook, utils, validations
 from .hook import Output
 
 
@@ -121,3 +128,88 @@ def assert_conversion(t: unittest.TestCase, o: Output, res: typing.Union[dict, t
 
 
     t.assertEqual(d[0]["convertedObjects"], expected)
+
+
+def load_validation_webhook(*paths: typing.Union[str, Path]) -> types.ModuleType:
+    """
+        Returns the hook webhook-operator renders for a ValidationWebhook as a module, so
+        hook.testrun can run its main.
+
+        Args:
+            paths: the files of handler.python, in the order the ValidationWebhook joins them
+    """
+    paths = [Path(p) for p in paths]
+    # The names the template has in scope for handler.python.
+    module = _new_module(paths, {"Optional": typing.Optional, "DotMap": DotMap, "hook": hook, "validations": validations})
+
+    # The template defines main before handler.python, so a handler could override it.
+    module.main = lambda ctx: validations.handle(ctx, module.validate)
+    for path in paths:
+        exec(compile(path.read_text(), str(path), "exec"), module.__dict__)
+    template_main = module.main
+
+    def main(ctx: hook.Context):
+        # The template sets keepFullObjectsInMemory: false on every context binding, so the hook
+        # gets the jqFilter result only. A snapshot item a test hands over with the full object
+        # must not let a handler that reads `object` pass here and fail in the cluster.
+        ctx.binding_context = _without_full_objects(ctx.binding_context)
+        ctx.snapshots = ctx.binding_context.get("snapshots", {})
+        return template_main(ctx)
+
+    module.main = main
+    return module
+
+
+def load_conversion_webhook(crd: str, conversions: typing.Iterable[typing.Tuple[str, str]], *paths: typing.Union[str, Path]) -> types.ModuleType:
+    """
+        Returns the hook webhook-operator renders for a ConversionWebhook as a module, so
+        hook.testrun can run its main with module.config.
+
+        Args:
+            crd: the name of the CRD, nodegroups.deckhouse.io
+            conversions: the (from, to) version pairs of the resource, ("v1alpha1", "v1")
+            paths: the files of handler.python, in the order of the resource
+    """
+    paths = [Path(p) for p in paths]
+    # The names the template has in scope for handler.python.
+    module = _new_module(paths, {"typing": typing, "DotMap": DotMap, "hook": hook, "utils": utils})
+
+    # The template pastes the handlers into a utils.BaseConversionHook subclass, indented by four
+    # spaces, every line including blank ones and lines inside multi-line strings.
+    handlers = "\n".join("\n".join("    " + line for line in p.read_text().split("\n")) for p in paths)
+    code = (
+        "class Conversion(utils.BaseConversionHook):\n"
+        "    def __init__(self, ctx: hook.Context):\n"
+        "        super().__init__(ctx)\n"
+        + handlers
+        + "\n\ndef main(ctx: hook.Context):\n    Conversion(ctx).run()\n"
+    )
+    exec(compile(code, str(paths[0]), "exec"), module.__dict__)
+
+    group = crd.split(".", 1)[1]
+    module.config = "configVersion: v1\nkubernetesCustomResourceConversion:\n" + "".join(
+        f"  - name: {source}_to_{target}\n"
+        f"    crdName: {crd}\n"
+        f"    conversions:\n"
+        f"    - fromVersion: {group}/{source}\n"
+        f"      toVersion: {group}/{target}\n"
+        for source, target in conversions
+    )
+    return module
+
+
+def _new_module(paths: typing.List[Path], names: dict) -> types.ModuleType:
+    name = "_".join(p.stem for p in paths) + "_hook"
+    module = types.ModuleType(name)
+    module.__dict__.update(names)
+    sys.modules[name] = module
+    return module
+
+
+def _without_full_objects(binding_context):
+    plain = copy.deepcopy(binding_context.toDict() if isinstance(binding_context, DotMap) else binding_context)
+    for snapshot in (plain.get("snapshots") or {}).values():
+        for item in snapshot or []:
+            if isinstance(item, dict):
+                item.pop("object", None)
+    return plain
