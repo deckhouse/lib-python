@@ -1,0 +1,15 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "description": "Python follows the version Deckhouse runs the library on; it is raised by hand together with Deckhouse.",
+      "matchDepNames": ["python"],
+      "enabled": false
+    },
+    {
+      "description": "Runtime dependencies are pinned in the Deckhouse images; a newer requirement here breaks their pip install.",
+      "matchDepNames": ["dictdiffer", "dotmap"],
+      "enabled": false
+    }
+  ]
+}
